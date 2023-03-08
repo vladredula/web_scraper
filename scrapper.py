@@ -1,5 +1,6 @@
 from bs4 import BeautifulSoup
 import requests
+import re
 from pprint import pprint
 
 url = "https://www.tgifridays.co.jp/foods/"
@@ -15,14 +16,14 @@ food_cat = soup.find("div", {"id":"controller"})
 
 aList = food_cat.findAll('a')
 
-menu = dict()
+food = dict()
 
 for a in aList:
     id = a['rel'][0].replace('#','')
-    menu[id] = {'name':a.text}
+    food[id] = {'name':a.text}
 
 
-for id in menu.keys():
+for id in food.keys():
     li = soup.find("div", {"id":id})
     liList = li.findAll("li", class_="menu-item")
 
@@ -31,13 +32,25 @@ for id in menu.keys():
             continue
         foodname = li.a.text
         japname = li.a.span.text
+        
         foodname = foodname.replace(japname, '')
-        fooddesc = li.p.text
-        fooddesc = fooddesc.replace(japname, '')
-        fooddesc = fooddesc.replace('\n', '')
-        menu[id][foodname] = (japname, fooddesc)
+        japname = japname.replace(' ', '')
 
-print(menu)
+        details = li.p.text
+        details = details.replace(' ', '')
+        details = details.replace(japname, '')
+        details = details.replace('\n', '')
+        
+        details = details.rsplit('。', 1)
+
+        if len(details) == 1:
+            details = details[0].rsplit('！', 1)
+        
+        print(details)
+        
+        food[id][foodname] = (japname, details[0], details[1])
+
+pprint(food)
 exit()
 
 # 0 - name of food
