@@ -3,17 +3,15 @@ import requests
 import re
 from pprint import pprint
 
-url = "https://www.tgifridays.co.jp/foods/"
+def getContent(url):
+    response = requests.get(url)
+    content = response.content
+    content = BeautifulSoup(content, "html.parser")
+    return content
 
-response = requests.get(url)
+soup = getContent("https://www.tgifridays.co.jp/foods/")
 
-content = response.content
-
-soup = BeautifulSoup(content, "html.parser")
-
-# getting the food category menu
 food_cat = soup.find("div", {"id":"controller"})
-
 aList = food_cat.findAll('a')
 
 food = dict()
