@@ -24,6 +24,9 @@ def getDrink(str):
     price = drink[1]
     return [ename, price]
 
+def getFood(str):
+    return
+
 soup = getContent("https://www.tgifridays.co.jp/drinks/")
 
 # locating the drink category menu
@@ -58,7 +61,6 @@ for li in liList:
         for p1 in li.div.div.find_all("p"):
             dList.append(getDrink(p1))
 
-        
         drinks[name] = dList
 
 soup = getContent("https://www.tgifridays.co.jp/foods/")
@@ -67,44 +69,50 @@ soup = getContent("https://www.tgifridays.co.jp/foods/")
 food_cat = soup.find("div", {"id":"controller"})
 aList = food_cat.findAll('a')
 
-food = dict()
+foods = dict()
+foodIds = dict()
 
-# getting list of food categorie
+# getting list of food categories
 for a in aList:
     id = a['rel'][0].replace('#','')
-    food[id] = {'name':a.text}
+    foodcat = a.text
+    foodIds[id] = foodcat
 
 
-for id in food.keys():
+for id in foodIds.keys():
     li = soup.find("div", {"id":id})
     liList = li.findAll("li", class_="menu-item")
 
     # getting the list of food under each category
+    fList = []
     for li in liList:
         if len(li['class']) > 1:
             continue
-        foodname = li.a.text
-        japname = li.a.span.text
-        
-        # removing name redunduncy
-        foodname = foodname.replace(japname, '')
-        japname = japname.replace(' ', '')
 
-        # cleaning string
-        details = li.p.text
-        details = details.replace(' ', '')
-        details = details.replace(japname, '')
-        details = details.replace('\n', '')
+        food = getStrippedString(li.a)
+        tname = food[-1]
+        del(food[-1])
+
+        food = ' '.join(food)
+        ename = food+"/"+tname
         
-        # splitting the price off the description text
-        details = details.rsplit('。', 1)
+        details = getStrippedString(li.div.p)
+        details = ' '.join(details)
+
+        details = details.rsplit('！', 1)
 
         if len(details) == 1:
-            details = details[0].rsplit('！', 1)
-        
-        food[id][foodname] = (japname, details[0], details[1])
+            details = details[0].rsplit('。', 1)
 
-pprint(drinks)
+        detail = details[0].replace(tname, "")
+        detail = detail.strip()
+        price = details[1].strip()
+        
+        fList.append([ename, detail, price])
+        
+    foods[foodIds[id]] = fList
+
+pprint(foods)
 exit()
 
 # 0 - name of food
