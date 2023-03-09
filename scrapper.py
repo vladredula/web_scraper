@@ -6,8 +6,66 @@ from pprint import pprint
 def getContent(url):
     response = requests.get(url)
     content = response.content
-    content = BeautifulSoup(content, "html.parser")
+    content = BeautifulSoup(content, "lxml")
     return content
+
+soup = getContent("https://www.tgifridays.co.jp/drinks/")
+
+# locating the drink category menu
+drink_cat = soup.find("div", {"id":"ultimates"})
+liList = drink_cat.find_all('li', class_="menu-item")
+
+drinks = dict()
+
+# getting list of drink categories and translations
+for li in liList:
+    ename = li.a.contents[0]
+    tname = li.a.span.text
+    name = ename+"/"+tname
+
+    drinks[name] = {}
+
+    pList = li.div.find_all("p", class_="group")
+
+    if len(pList) > 0:
+        # getting sub categories for drinks
+        for p in pList:
+            div = p.find_next_sibling("div")
+
+            # getting the drinks under the subcategory
+            dList = []
+            for p1 in div.find_all("p"):
+                drink = p1.stripped_strings
+                drink = list(drink)
+                tname = drink[-1]
+                del(drink[-1])
+
+                drink = ' '.join(drink)
+                drink = drink.split("/")
+                ename = drink[0].strip()+"/"+tname.strip()
+                price = drink[1].strip()
+                drink = [ename, price]
+                dList.append(drink)
+
+            
+            drinks[name][p.text] = dList
+    else:
+        dList = []
+        for p1 in li.div.div.find_all("p"):
+            drink = p1.stripped_strings
+            drink = list(drink)
+            tname = drink[-1]
+            del(drink[-1])
+
+            drink = ' '.join(drink)
+            drink = drink.split("/")
+            ename = drink[0].strip()+"/"+tname.strip()
+            price = drink[1].strip()
+            drink = [ename, price]
+            dList.append(drink)
+
+        
+        drinks[name] = dList
 
 soup = getContent("https://www.tgifridays.co.jp/foods/")
 
