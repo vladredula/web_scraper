@@ -1,6 +1,5 @@
 from bs4 import BeautifulSoup
 import requests
-import re
 from pprint import pprint
 
 def getContent(url):
@@ -25,7 +24,25 @@ def getDrink(str):
     return [ename, price]
 
 def getFood(str):
-    return
+    food = getStrippedString(str.a)
+    tname = food[-1]
+    del(food[-1])
+
+    food = ' '.join(food)
+    name = food+"/"+tname
+    
+    details = getStrippedString(str.div.p)
+    details = ' '.join(details)
+
+    details = details.rsplit('！', 1)
+
+    if len(details) == 1:
+        details = details[0].rsplit('。', 1)
+
+    detail = details[0].replace(tname, "")
+    detail = detail.strip()
+    price = details[1].strip()
+    return [name, detail, price]
 
 soup = getContent("https://www.tgifridays.co.jp/drinks/")
 
@@ -58,8 +75,8 @@ for li in liList:
             drinks[name][p.text] = dList
     else:
         dList = []
-        for p1 in li.div.div.find_all("p"):
-            dList.append(getDrink(p1))
+        for p in li.div.div.find_all("p"):
+            dList.append(getDrink(p))
 
         drinks[name] = dList
 
@@ -88,31 +105,12 @@ for id in foodIds.keys():
     for li in liList:
         if len(li['class']) > 1:
             continue
-
-        food = getStrippedString(li.a)
-        tname = food[-1]
-        del(food[-1])
-
-        food = ' '.join(food)
-        ename = food+"/"+tname
         
-        details = getStrippedString(li.div.p)
-        details = ' '.join(details)
-
-        details = details.rsplit('！', 1)
-
-        if len(details) == 1:
-            details = details[0].rsplit('。', 1)
-
-        detail = details[0].replace(tname, "")
-        detail = detail.strip()
-        price = details[1].strip()
-        
-        fList.append([ename, detail, price])
+        fList.append(getFood(li))
         
     foods[foodIds[id]] = fList
 
-pprint(foods)
+pprint(drinks)
 exit()
 
 # 0 - name of food
