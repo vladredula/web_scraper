@@ -9,6 +9,10 @@ def getContent(url):
     content = BeautifulSoup(content, "lxml")
     return content
 
+def getStrippedStr(str):
+    str = str.stripped_strings
+    return list(str)
+
 soup = getContent("https://www.tgifridays.co.jp/drinks/")
 
 # locating the drink category menu
@@ -35,8 +39,7 @@ for li in liList:
             # getting the drinks under the subcategory
             dList = []
             for p1 in div.find_all("p"):
-                drink = p1.stripped_strings
-                drink = list(drink)
+                drink = getStrippedStr(p1)
                 tname = drink[-1]
                 del(drink[-1])
 
@@ -52,8 +55,7 @@ for li in liList:
     else:
         dList = []
         for p1 in li.div.div.find_all("p"):
-            drink = p1.stripped_strings
-            drink = list(drink)
+            drink = getStrippedStr(p1)
             tname = drink[-1]
             del(drink[-1])
 
