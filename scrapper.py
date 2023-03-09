@@ -9,9 +9,20 @@ def getContent(url):
     content = BeautifulSoup(content, "lxml")
     return content
 
-def getStrippedStr(str):
+def getStrippedString(str):
     str = str.stripped_strings
     return list(str)
+
+def getDrink(str):
+    drink = getStrippedString(str)
+    tname = drink[-1]
+    del(drink[-1])
+
+    drink = ' '.join(drink)
+    drink = drink.split("/")
+    ename = drink[0]+"/"+tname
+    price = drink[1]
+    return [ename, price]
 
 soup = getContent("https://www.tgifridays.co.jp/drinks/")
 
@@ -39,32 +50,13 @@ for li in liList:
             # getting the drinks under the subcategory
             dList = []
             for p1 in div.find_all("p"):
-                drink = getStrippedStr(p1)
-                tname = drink[-1]
-                del(drink[-1])
+                dList.append(getDrink(p1))
 
-                drink = ' '.join(drink)
-                drink = drink.split("/")
-                ename = drink[0].strip()+"/"+tname.strip()
-                price = drink[1].strip()
-                drink = [ename, price]
-                dList.append(drink)
-
-            
             drinks[name][p.text] = dList
     else:
         dList = []
         for p1 in li.div.div.find_all("p"):
-            drink = getStrippedStr(p1)
-            tname = drink[-1]
-            del(drink[-1])
-
-            drink = ' '.join(drink)
-            drink = drink.split("/")
-            ename = drink[0].strip()+"/"+tname.strip()
-            price = drink[1].strip()
-            drink = [ename, price]
-            dList.append(drink)
+            dList.append(getDrink(p1))
 
         
         drinks[name] = dList
@@ -110,11 +102,9 @@ for id in food.keys():
         if len(details) == 1:
             details = details[0].rsplit('！', 1)
         
-        print(details)
-        
         food[id][foodname] = (japname, details[0], details[1])
 
-pprint(food)
+pprint(drinks)
 exit()
 
 # 0 - name of food
