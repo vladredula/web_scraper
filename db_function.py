@@ -1,5 +1,4 @@
-from psycopg2 import connect
-from psycopg2 import OperationalError
+import psycopg2
 
 def print_psycopg2_exception(err):
     # psycopg2 extensions.Diagnostics object attribute
@@ -12,6 +11,9 @@ def print_psycopg2_exception(err):
 
 def create_database(dbname):
     sql = f'CREATE DATABASE {dbname}'
+
+    execute_query(sql)
+
     
 def create_table(tname, fields, pkey):
     sql = f'CREATE TABLE {tname} ('
@@ -31,34 +33,51 @@ def create_table(tname, fields, pkey):
     
     sql += ') '
 
+    # execute the structured sql
+    execute_query(sql)
 
-    try:
-        cursor.execute(sql)
-    except Exception as err:
-        # pass exception to function
-        print(err)
-
-    conn.commit()
-
-    # check if the table was successfully created
+    # check if the table was not successfully created
     if not table_exists(tname):
         print('Error: unable to create table')
 
 
 def table_exists(tname):
     sql = f"SELECT EXISTS (SELECT FROM pg_catalog.pg_tables WHERE tablename = '{tname}')"
-    cursor.execute(sql)
-    return cursor.fetchone()[0]
+    return execute_query(sql)
+
+
+def execute_query(sql):
+
+    # return false if the passed string is empty
+    if sql == '':
+        return False
+    
+    try:
+        cursor.execute(sql)
+    except psycopg2.OperationalError as err:
+        print_psycopg2_exception(err)
+
+    # commit the changes to the database
+    conn.commit()
+
+    # get all the results from the query statement
+    result = cursor.fetchall()
+
+    # close the cursor object to avoid memory leaks
+    cursor.close()
+    conn.close()
+
+    return result
 
 try:
-    conn = connect(
+    conn = psycopg2.connect(
         dbname = "postgres",
         user = "postgres",
         host = "localhost",
         password = "password",
         port = '5432'
     )
-except OperationalError as err:
+except psycopg2.OperationalError as err:
     # pass exception to function
     print_psycopg2_exception(err)
 
@@ -70,24 +89,11 @@ if conn != None:
     # declare a cursor object from the connection
     cursor = conn.cursor()
 
-    # execute a PostgreSQL command to get all rows in a table
-    # returns 'psycopg2.errors.InFailedSqlTransaction' if rollback() not called
+    # execute a simple PostgreSQL command to get the current datebase name
     try:
         cursor.execute('SELECT current_database()')
     except Exception as err:
         # pass exception to function
-        print(err)
-
-    table = 'sample'
-    columns = {
-        'id':'int',
-        'name':'varchar'
-    }
-    pkey = 'id'
-
-    create_table(table, columns,pkey)
-
-    # close the cursor object to avoid memory leaks
-    cursor.close()
+        print_psycopg2_exception(err)
     
 
