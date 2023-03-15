@@ -17,9 +17,9 @@ def getDrink(str):
     tname = drink[-1]
     del(drink[-1])
 
-    drink = ' '.join(drink)
+    drink = joinStr(drink, ' ')
     drink = drink.split("/")
-    ename = drink[0]+"/"+tname
+    ename = joinStr([drink[0],tname])
     price = drink[1]
     return [ename, price]
 
@@ -28,11 +28,11 @@ def getFood(str):
     tname = food[-1]
     del(food[-1])
 
-    food = ' '.join(food)
-    name = food+"/"+tname
+    food = joinStr(food, ' ')
+    name = joinStr([food, tname])
     
     details = getStrippedString(str.div.p)
-    details = ' '.join(details)
+    details = joinStr(details, ' ')
 
     details = details.rsplit('！', 1)
 
@@ -40,9 +40,12 @@ def getFood(str):
         details = details[0].rsplit('。', 1)
 
     detail = details[0].replace(tname, "")
-    detail = detail.strip()
-    price = details[1].strip()
+    detail = detail
+    price = details[1]
     return [name, detail, price]
+
+def joinStr(str, delimiter = "/"):
+    return delimiter.join(str)
 
 soup = getContent("https://www.tgifridays.co.jp/drinks/")
 
@@ -54,9 +57,7 @@ drinks = dict()
 
 # getting list of drink categories and translations
 for li in liList:
-    ename = li.a.contents[0]
-    tname = li.a.span.text
-    name = ename+"/"+tname
+    name = joinStr([li.a.contents[0], li.a.span.text])
 
     drinks[name] = {}
 
