@@ -1,51 +1,61 @@
 from bs4 import BeautifulSoup
 import requests
-from pprint import pprint
+from item import Food, Drink
 
 def getContent(url):
     response = requests.get(url)
     content = response.content
-    content = BeautifulSoup(content, "lxml")
+    content = BeautifulSoup(content, "html.parser")
     return content
 
 def getStrippedString(str):
     str = str.stripped_strings
     return list(str)
 
-def getDrink(str):
-    drink = getStrippedString(str)
-    tname = drink[-1]
-    del(drink[-1])
 
-    drink = joinStr(drink, ' ')
-    drink = drink.split("/")
-    ename = joinStr([drink[0],tname])
-    price = drink[1]
-    return [ename, price]
+soup = getContent("https://www.tgifridays.co.jp/foods/")
 
-def getFood(str):
-    food = getStrippedString(str.a)
-    tname = food[-1]
-    del(food[-1])
+# locating the food category menu
+cat_menu = soup.find("div", {"id":"controller"})
+aList = cat_menu.findAll('a')
 
-    food = joinStr(food, ' ')
-    name = joinStr([food, tname])
-    
-    details = getStrippedString(str.div.p)
-    details = joinStr(details, ' ')
+food_category = dict()
 
-    details = details.rsplit('！', 1)
+# getting list of food categories
+for a in aList:
+    id = a['rel'][0].replace('#','')
+    category_name = a.text
+    food_category[id] = category_name
 
-    if len(details) == 1:
-        details = details[0].rsplit('。', 1)
 
-    detail = details[0].replace(tname, "")
-    detail = detail
-    price = details[1]
-    return [name, detail, price]
+for id in food_category.keys():
+    li = soup.find("div", {"id":id})
+    liList = li.findAll("li", class_="menu-item")
 
-def joinStr(str, delimiter = "/"):
-    return delimiter.join(str)
+    # getting the list of food under each category
+    sub_cat = ''
+    for li in liList:
+        if len(li['class']) > 1:
+            sub_cat = li.text
+            continue
+
+        food = getStrippedString(li.a)
+        name = ' '.join(food[:-1])
+        tname = food[-1]
+
+        details = getStrippedString(li.div.p)
+        details = ' '.join(details)
+
+        details = details.rsplit('！', 1)
+
+        if len(details) == 1:
+            details = details[0].rsplit('。', 1)
+
+        detail = details[0].replace(tname, "")
+        price = details[1]
+
+        Food(name, tname, detail, price, food_category[id], sub_cat)
+
 
 soup = getContent("https://www.tgifridays.co.jp/drinks/")
 
@@ -57,63 +67,28 @@ drinks = dict()
 
 # getting list of drink categories and translations
 for li in liList:
-    name = joinStr([li.a.contents[0], li.a.span.text])
+    category_name = li.a.contents[0]+'/'+li.a.span.text
 
     drinks[name] = {}
 
-    pList = li.div.find_all("p", class_="group")
+    pList = li.div.find_all("p")
 
-    if len(pList) > 0:
-        # getting sub categories for drinks
-        for p in pList:
-            div = p.find_next_sibling("div")
-
-            # getting the drinks under the subcategory
-            dList = []
-            for p1 in div.find_all("p"):
-                dList.append(getDrink(p1))
-
-            drinks[name][p.text] = dList
-    else:
-        dList = []
-        for p in li.div.div.find_all("p"):
-            dList.append(getDrink(p))
-
-        drinks[name] = dList
-
-soup = getContent("https://www.tgifridays.co.jp/foods/")
-
-# locating the food category menu
-food_cat = soup.find("div", {"id":"controller"})
-aList = food_cat.findAll('a')
-
-foods = dict()
-foodIds = dict()
-
-# getting list of food categories
-for a in aList:
-    id = a['rel'][0].replace('#','')
-    foodcat = a.text
-    foodIds[id] = foodcat
-
-
-for id in foodIds.keys():
-    li = soup.find("div", {"id":id})
-    liList = li.findAll("li", class_="menu-item")
-
-    # getting the list of food under each category
-    fList = []
-    for li in liList:
-        if len(li['class']) > 1:
+    sub_cat = ''
+    for p in pList:
+        if p.has_attr('class'):
+            sub_cat = p.text
             continue
         
-        fList.append(getFood(li))
-        
-    foods[foodIds[id]] = fList
+        drink = getStrippedString(p)
+        tname = drink[-1]
+        drink = ' '.join(drink[:-1])
 
-pprint(drinks)
+        drink = drink.split("/")
+        name = drink[0]
+        price = drink[1]
+
+        Drink(name, tname, '', price, category_name, sub_cat)
+
+for food in Food.all:
+    print(food.__dict__)
 exit()
-
-# 0 - name of food
-# 1 - japanese name
-# 3 - description and price
