@@ -31,6 +31,7 @@ class DB_connector:
         try:
             self.cursor.execute(query, params)
             print("Query executed successfully")
+            self.conn.commit()
         except psycopg2.Error as e:
             print(f"Error executing query: {e}")
 
