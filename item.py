@@ -14,24 +14,30 @@ class Item:
 
 
 class Food(Item):
-    def __init__(self, name, tname, description, price, category, subcategory = ''):
+    all = []
+    def __init__(self, name, tname, description, price, category, subcategory = None):
         # Call to super function to have access to all attributes / methods
         super().__init__(
             name, tname, description, price
         )
 
         # Assign to self object
-        self.catergory = category
+        self.category = category
         self.subcategory = subcategory
+
+        Food.all.append(self)
 
 
 class Drink(Item):
-    def __init__(self, name, tname, description, price, category, subcategory = ''):
+    all = []
+    def __init__(self, name, tname, description, price, category, subcategory = None):
         # Call to super function to have access to all attributes / methods
         super().__init__(
             name, tname, description, price
         )
 
         # Assign to self object
-        self.catergory = category
+        self.category = category
         self.subcategory = subcategory
+
+        Drink.all.append(self)
