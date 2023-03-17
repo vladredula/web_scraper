@@ -41,6 +41,7 @@ CREATE TABLE IF NOT EXISTS public.Items
     CategoryID character(4),
     SubCatID character(4),
     ClassificationID character(1) NOT NULL,
+    Img_url character varying,
     CONSTRAINT Items_pkey PRIMARY KEY (ID),
     CONSTRAINT category_id_to_items FOREIGN KEY (CategoryID)
         REFERENCES public.Category (ID) MATCH SIMPLE

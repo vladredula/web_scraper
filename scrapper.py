@@ -73,6 +73,8 @@ for category_name, id in food_category.items():
             food_category[category_name].append(sub_cat)
             continue
 
+        img = li.img['src']
+
         food = getStrippedString(li.a)
         name = ' '.join(food[:-1])
         tname = food[-1]
@@ -91,7 +93,7 @@ for category_name, id in food_category.items():
         category_id = make_abbreviation(category_name)
         sub_cat_id = make_abbreviation(sub_cat)
 
-        Food(name, tname, detail, price, category_id, sub_cat_id)
+        Food(name, tname, detail, price, category_id, img, sub_cat_id)
 
 
 soup = getContent("https://www.tgifridays.co.jp/drinks/")
@@ -172,7 +174,7 @@ for category, sub_categories in categories.items():
 for item in Food.all:
     food = item.__dict__
 
-    sql = "INSERT INTO public.items (name, tname, description, price, categoryid, subcatid, classificationid) VALUES (%s, %s, %s, %s, %s, %s, %s);"
+    sql = "INSERT INTO public.items (name, tname, description, price, categoryid, subcatid, classificationid, img_url) VALUES (%s, %s, %s, %s, %s, %s, %s, %s);"
 
     values = [
         food['name'],
@@ -181,7 +183,8 @@ for item in Food.all:
         food['price'],
         food['category'],
         food['subcategory'],
-        'F'
+        'F',
+        food['img_url']
     ]
 
     print(values)
@@ -191,12 +194,11 @@ for item in Food.all:
 for item in Drink.all:
     drink = item.__dict__
 
-    sql = "INSERT INTO public.items (name, tname, description, price, categoryid, subcatid, classificationid) VALUES (%s, %s, %s, %s, %s, %s, %s);"
+    sql = "INSERT INTO public.items (name, tname, price, categoryid, subcatid, classificationid) VALUES (%s, %s, %s, %s, %s, %s);"
 
     values = [
         drink['name'],
         drink['tname'],
-        drink['description'],
         drink['price'],
         drink['category'],
         drink['subcategory'],
