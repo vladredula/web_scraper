@@ -29,5 +29,10 @@ def table_exists(tname):
     sql = f"SELECT EXISTS (SELECT FROM pg_catalog.pg_tables WHERE tablename = '{tname}')"
     
     return sql
+
+def truncate_table(tname):
+    sql = f"TRUNCATE {tname}"
+
+    return sql
     
 
