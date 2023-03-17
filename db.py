@@ -27,15 +27,12 @@ class DB_connector:
         except psycopg2.Error as e:
             print(f"Error connecting to database: {e}")
 
-    def execute_query(self, query):
+    def execute_query(self, query, params = []):
         try:
-            self.cursor.execute(query)
+            self.cursor.execute(query, params)
             print("Query executed successfully")
         except psycopg2.Error as e:
             print(f"Error executing query: {e}")
-
-        result = self.cursor.fetchall()
-        return result
 
     def close_connection(self):
         if self.conn:
