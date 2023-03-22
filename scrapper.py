@@ -1,8 +1,7 @@
 from bs4 import BeautifulSoup
 import requests
 import re
-from item import Food, Drink
-from db import DB_connector
+from item import Item
 
 def getContent(url):
     response = requests.get(url)
@@ -66,7 +65,7 @@ for category_name, id in food_category.items():
 
     # getting the list of food under each category
     food_category[category_name] = []
-    sub_cat = None
+    sub_cat = ''
     for li in liList:
         if len(li['class']) > 1:
             sub_cat = li.text
@@ -90,10 +89,7 @@ for category_name, id in food_category.items():
         detail = details[0].replace(tname, "")
         price = extract_price(details[1])
 
-        category_id = make_abbreviation(category_name)
-        sub_cat_id = make_abbreviation(sub_cat)
-
-        Food(name, tname, detail, price, category_id, img, sub_cat_id)
+        Item(name, tname, detail, price, category_name, sub_cat, img)
 
 
 soup = getContent("https://www.tgifridays.co.jp/drinks/")
@@ -106,13 +102,13 @@ drink_category = dict()
 
 # getting list of drink categories and translations
 for li in liList:
-    category_name = li.a.contents[0] # +'/'+li.a.span.text
+    category_name = li.a.contents[0].text # +'/'+li.a.span.text
 
     drink_category[category_name] = []
 
     pList = li.div.find_all("p")
 
-    sub_cat = None
+    sub_cat = ''
     for p in pList:
         if p.has_attr('class'):
             sub_cat = p.text
@@ -127,91 +123,13 @@ for li in liList:
         name = drink[0]
         price = extract_price(drink[1])
 
-        category_id = make_abbreviation(category_name)
-        sub_cat_id = make_abbreviation(sub_cat)
-
-        Drink(name, tname, '', price, category_id, sub_cat_id)
+        Item(name, tname, '', price, category_name, sub_cat, '')
 
 
-
-db = DB_connector('postgres','postgres','password','localhost','5432')
-
-db.connect()
-
-with open('tables.sql', 'r') as file:
-    sql = file.read()
-
-db.execute_query(sql)
-
-# insert type
-db.execute_query("TRUNCATE public.sub_category CASCADE")
-db.execute_query("TRUNCATE public.category CASCADE")
-db.execute_query("TRUNCATE public.items CASCADE")
-
-categories = {**food_category, **drink_category}
-
-# insert categories
-for category, sub_categories in categories.items():
-    cat_abbr = make_abbreviation(category)
-
-    if category in food_category.keys():
-        item_type = 'F'
-    else:
-        item_type = 'D'
-
-    sql = "INSERT INTO public.category (id, name, classificationid) VALUES (%s, %s, %s);"
-    
-    db.execute_query(sql, [cat_abbr, category, item_type])
-
-    if sub_categories != []:
-        for sub_cat in sub_categories:
-            subcat_abbr = make_abbreviation(sub_cat)
-            sql = "INSERT INTO public.sub_category (id, name, categoryid) VALUES (%s, %s, %s);"
-
-            db.execute_query(sql, [subcat_abbr, sub_cat, cat_abbr])
-
-
-for item in Food.all:
+for id, item in enumerate(Item.all):
     food = item.__dict__
-
-    sql = "INSERT INTO public.items (name, tname, description, price, categoryid, subcatid, classificationid, img_url) VALUES (%s, %s, %s, %s, %s, %s, %s, %s);"
-
-    values = [
-        food['name'],
-        food['tname'],
-        food['description'],
-        food['price'],
-        food['category'],
-        food['subcategory'],
-        'F',
-        food['img_url']
-    ]
-
-    print(values)
-
-    db.execute_query(sql, values)
-
-for item in Drink.all:
-    drink = item.__dict__
-
-    sql = "INSERT INTO public.items (name, tname, price, categoryid, subcatid, classificationid) VALUES (%s, %s, %s, %s, %s, %s);"
-
-    values = [
-        drink['name'],
-        drink['tname'],
-        drink['price'],
-        drink['category'],
-        drink['subcategory'],
-        'D'
-    ]
-
-    print(values)
-
-    db.execute_query(sql, values)
-
-# insert items
-
-
-db.close_connection()
-
-exit()
+    food['id'] = id+1
+    if id == 56:
+        print(food)
+        for key, value in food.items():
+            print(key, type(value))
