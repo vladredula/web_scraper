@@ -1,7 +1,7 @@
 
 class Item:
     all = []
-    def __init__(self, name, tname, description, price, category, subcategory, img_url):
+    def __init__(self, name, tname, description, price, category, subcategory, img_url, itemtype):
         self.name = name
         self.tname = tname
         self.description = description
@@ -9,6 +9,7 @@ class Item:
         self.category = category
         self.subcategory = subcategory
         self.img_url = img_url
+        self.type = itemtype
 
         Item.all.append(self)
 
