@@ -1,7 +1,7 @@
 
 class Item:
     all = []
-    def __init__(self, name, tname, description, price, category, subcategory, img_url, itemtype):
+    def __init__(self, name, tname, description, category, subcategory, img_url, itemtype, price = []):
         self.name = name
         self.tname = tname
         self.description = description
