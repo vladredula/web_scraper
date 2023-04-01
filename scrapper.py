@@ -31,6 +31,41 @@ def extract_price(str):
     return price[1]
 
 
+def get_prices(string):
+    string = string.replace("（", "(")
+    string = string.replace("）", ")")
+    string = string.replace(",", "")
+    string = string.replace("グラス", "glass")
+    string = string.replace("ボトル", "bottle")
+    string = string.replace("ハーフサイズ", "half")
+    string = string.replace("レギュラーサイズ", "regular")
+    string = string.replace("フルサイズ", "full")
+    # strings = string.split("円)")
+
+    patterns = [r"\((\w)\)(\d+)円\(税込(\d+)", 
+                r"(\d\w)\ (\d+)円\(税込(\d+)", 
+                r"(\w+)\:(\d+)円\(税込(\d+)", 
+                r"(\w+)\ (\d+)円\(税込(\d+)", 
+                r"(\w+)(\d+)円\(税込(\d+)", 
+                r"(\d+)円\(税込(\d+)",
+                r"(\d+)円\ \(税込(\d+)"
+    ]
+
+    prices = {}
+    # for string in strings:
+    for pattern in patterns:
+        matches = re.findall(pattern, string)
+        if matches != None and matches != []:
+            for match in matches:
+                if len(match) == 2:
+                    prices['1'] = match[1]
+                else:
+                    prices[match[0]] = match[2]
+            break
+    
+    return prices
+
+
 def make_abbreviation(str):
     if str == '':
         return str
@@ -100,9 +135,9 @@ def scrape():
                 details = details[0].rsplit('。', 1)
     
             detail = details[0].replace(tname, "")
-            price = extract_price(details[1])
+            price = get_prices(details[1])
     
-            Item(name, tname, detail, price, category_abbr, sub_cat, img, 'F')
+            Item(name, tname, detail, category_abbr, sub_cat, img, 'F', price)
     
 
     soup = getContent("https://www.tgifridays.co.jp/drinks/")
@@ -127,14 +162,15 @@ def scrape():
                 continue
             
             drink = getStrippedString(p)
+
             tname = drink[-1]
             drink = ' '.join(drink[:-1])
     
+            price = get_prices(drink)
             drink = drink.split("/")
             name = drink[0]
-            price = extract_price(drink[1])
-    
-            Item(name, tname, '', price, category_abbr, sub_cat, '', 'D')
+
+            Item(name, tname, '', category_abbr, sub_cat, '', 'D', price)
 
     for item in Category.all:
         print(item.__dict__)
