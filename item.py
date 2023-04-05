@@ -10,6 +10,7 @@ class Item:
         self.subcategory = subcategory
         self.img_url = img_url
         self.type = itemtype
+        self.id = len(self.all) + 1
 
         Item.all.append(self)
 
