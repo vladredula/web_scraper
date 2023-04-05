@@ -13,29 +13,18 @@ def getContent(url):
     return content
 
 
-def getStrippedString(str):
-    str = str.stripped_strings
+def getStrippedString(string):
+    string = string.stripped_strings
     
-    return list(str)
+    return list(string)
 
 
-def extract_price(str):
-    str = ''.join(c for c in str if c.isalnum())
-    integers = re.findall(r'\d+', str)
-
-    price = []
-
-    for i in integers:
-        price.append(int(i))
-
-    return price[1]
-
-
-def get_prices(string):
+def getPrices(string):
     string = string.replace("（", "(")
     string = string.replace("）", ")")
     string = string.replace(",", "")
     string = string.replace("グラス", "glass")
+    string = string.replace("ハーフボトル", "halfbottle")
     string = string.replace("ボトル", "bottle")
     string = string.replace("ハーフサイズ", "half")
     string = string.replace("レギュラーサイズ", "regular")
@@ -46,42 +35,42 @@ def get_prices(string):
                 r"(\d\w)\ (\d+)円\(税込(\d+)", 
                 r"(\w+)\:(\d+)円\(税込(\d+)", 
                 r"(\w+)\ (\d+)円\(税込(\d+)", 
-                r"(\w+)(\d+)円\(税込(\d+)", 
+                r"([a-z]+)([0-9]+)円\(税込(\d+)", 
                 r"(\d+)円\(税込(\d+)",
                 r"(\d+)円\ \(税込(\d+)"
     ]
 
-    prices = {}
+    prices = []
     # for string in strings:
     for pattern in patterns:
         matches = re.findall(pattern, string)
         if matches != None and matches != []:
             for match in matches:
                 if len(match) == 2:
-                    prices['1'] = match[1]
+                    prices.append("1:"+match[1])
                 else:
-                    prices[match[0]] = match[2]
+                    prices.append(match[0]+":"+match[2])
             break
     
-    return prices
+    return ",".join(prices)
 
 
-def make_abbreviation(str):
-    if str == '':
-        return str
+def makeAbbreviation(string):
+    if string == '':
+        return string
         
-    str = str.strip()
-    abbreviation = str[0]
+    string = string.strip()
+    abbreviation = string[0]
 
     vowels = 'aeiouAEIOU'
-    new_str = ''
-    for s in str[1:]:
+    newString = ''
+    for s in string[1:]:
         if s not in vowels and s.isalnum():
-            new_str += s
+            newString += s
 
     for i in range(3):
-        if i < len(new_str):
-            abbreviation += new_str[i]
+        if i < len(newString):
+            abbreviation += newString[i]
 
     return abbreviation.lower()
     
@@ -90,34 +79,34 @@ def scrape():
     soup = getContent("https://www.tgifridays.co.jp/foods/")
 
     # locating the food category menu
-    cat_menu = soup.find("div", {"id":"controller"})
-    aList = cat_menu.findAll('a')
+    foodDiv = soup.find("div", {"id":"controller"})
+    aList = foodDiv.findAll('a')
     
-    food_category = dict()
+    foodCategory = dict()
 
     # getting list of food categories
     for a in aList:
-        category_id = a['rel'][0].replace('#','')
-        category_name = a.text.strip()
-        food_category[category_id] = category_name
+        categoryId = a['rel'][0].replace('#','')
+        categoryName = a.text.strip()
+        foodCategory[categoryId] = categoryName
 
-    for category_id, category_name in food_category.items():
-        cat_img_url = soup.find("a", {"class":"nolink","rel":"#"+category_id})
+    for categoryId, categoryName in foodCategory.items():
+        catImgUrl = soup.find("a", {"class":"nolink","rel":"#"+categoryId})
 
-        cat_img_url = cat_img_url.img['src']
-        category_name = category_name.lower()
-        category_abbr = make_abbreviation(category_name)
+        catImgUrl = catImgUrl.img['src']
+        categoryName = categoryName.lower()
+        categoryAbbr = makeAbbreviation(categoryName)
         
-        Category(category_name, category_abbr, 'F', cat_img_url)
+        Category(categoryName, categoryAbbr, 'F', catImgUrl)
 
-        li = soup.find("div", {"id":category_id})
+        li = soup.find("div", {"id":categoryId})
         liList = li.findAll("li", class_="menu-item")
     
         # getting the list of food under each category
-        sub_cat = ""
+        subCategory = ""
         for li in liList:
             if len(li['class']) > 1:
-                sub_cat = li.text
+                subCategory = li.text
                 continue
     
             img = li.img['src']
@@ -135,30 +124,30 @@ def scrape():
                 details = details[0].rsplit('。', 1)
     
             detail = details[0].replace(tname, "")
-            price = get_prices(details[1])
+            price = getPrices(details[1])
     
-            Item(name, tname, detail, category_abbr, sub_cat, img, 'F', price)
+            Item(name, tname, detail, categoryAbbr, subCategory, img, 'F', price)
     
 
     soup = getContent("https://www.tgifridays.co.jp/drinks/")
     
     # locating the drink category menu
-    drink_menu = soup.find("div", {"id":"ultimates"})
-    liList = drink_menu.find_all('li', class_="menu-item")
+    drinkDiv = soup.find("div", {"id":"ultimates"})
+    liList = drinkDiv.find_all('li', class_="menu-item")
     
     # getting list of drink categories and translations
     for li in liList:
-        category_name = li.a.contents[0].text.lower().strip()
-        category_abbr = make_abbreviation(category_name)
+        categoryName = li.a.contents[0].text.lower().strip()
+        categoryAbbr = makeAbbreviation(categoryName)
         
-        Category(category_name, category_abbr, 'D')
+        Category(categoryName, categoryAbbr, 'D')
     
         pList = li.div.find_all("p")
     
-        sub_cat = ""
+        subCategory = ""
         for p in pList:
             if p.has_attr('class'):
-                sub_cat = p.text
+                subCategory = p.text
                 continue
             
             drink = getStrippedString(p)
@@ -166,11 +155,13 @@ def scrape():
             tname = drink[-1]
             drink = ' '.join(drink[:-1])
     
-            price = get_prices(drink)
+            price = getPrices(drink)
             drink = drink.split("/")
             name = drink[0]
 
-            Item(name, tname, '', category_abbr, sub_cat, '', 'D', price)
+            name = name.replace("（S）550円（税込605円）", "")
+    
+            Item(name, tname, '', categoryAbbr, subCategory, '', 'D', price)
 
     for item in Category.all:
         print(item.__dict__)
