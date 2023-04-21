@@ -97,7 +97,7 @@ def scrape():
         categoryName = categoryName.lower()
         categoryAbbr = makeAbbreviation(categoryName)
         
-        Category(categoryName, categoryAbbr, 'F', catImgUrl)
+        Category(categoryName, categoryAbbr, 'food', catImgUrl)
 
         li = soup.find("div", {"id":categoryId})
         liList = li.findAll("li", class_="menu-item")
@@ -106,7 +106,7 @@ def scrape():
         subCategory = ""
         for li in liList:
             if len(li['class']) > 1:
-                subCategory = li.text
+                subCategory = li.text.lower()
                 continue
     
             img = li.img['src']
@@ -126,7 +126,7 @@ def scrape():
             detail = details[0].replace(tname, "")
             price = getPrices(details[1])
     
-            Item(name, tname, detail, categoryAbbr, subCategory, img, 'F', price)
+            Item(name, tname, detail, categoryAbbr, subCategory, img, 'food', price)
     
 
     soup = getContent("https://www.tgifridays.co.jp/drinks/")
@@ -140,14 +140,14 @@ def scrape():
         categoryName = li.a.contents[0].text.lower().strip()
         categoryAbbr = makeAbbreviation(categoryName)
         
-        Category(categoryName, categoryAbbr, 'D')
+        Category(categoryName, categoryAbbr, 'drink')
     
         pList = li.div.find_all("p")
     
         subCategory = ""
         for p in pList:
             if p.has_attr('class'):
-                subCategory = p.text
+                subCategory = p.text.lower()
                 continue
             
             drink = getStrippedString(p)
@@ -159,9 +159,11 @@ def scrape():
             drink = drink.split("/")
             name = drink[0]
 
+            # specific string replacement
+            # string pattern cannot be recognized
             name = name.replace("（S）550円（税込605円）", "")
     
-            Item(name, tname, '', categoryAbbr, subCategory, '', 'D', price)
+            Item(name, tname, '', categoryAbbr, subCategory, '', 'drink', price)
 
     for item in Category.all:
         print(item.__dict__)
