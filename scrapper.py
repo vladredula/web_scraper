@@ -109,7 +109,7 @@ def scrape():
                 subCategory = li.text.lower()
                 continue
     
-            img = li.img['src']
+            imgUrl = li.img['src']
     
             food = getStrippedString(li.a)
             name = ' '.join(food[:-1])
@@ -123,10 +123,9 @@ def scrape():
             if len(details) == 1:
                 details = details[0].rsplit('。', 1)
     
-            detail = details[0].replace(tname, "")
             price = getPrices(details[1])
     
-            Item(name, tname, detail, categoryAbbr, subCategory, img, 'food', price)
+            Item(name, tname, categoryAbbr, subCategory, 'food', price, imgUrl)
     
 
     soup = getContent("https://www.tgifridays.co.jp/drinks/")
@@ -163,7 +162,7 @@ def scrape():
             # string pattern cannot be recognized
             name = name.replace("（S）550円（税込605円）", "")
     
-            Item(name, tname, '', categoryAbbr, subCategory, '', 'drink', price)
+            Item(name, tname, categoryAbbr, subCategory, 'drink', price)
 
     for item in Category.all:
         print(item.__dict__)

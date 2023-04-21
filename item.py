@@ -1,15 +1,14 @@
 
 class Item:
     all = []
-    def __init__(self, name, tname, description, category, subcategory, img_url, itemtype, price = []):
+    def __init__(self, name, tname, category, subCategory, itemType, price, imgUrl = ""):
         self.name = name
         self.tname = tname
-        self.description = description
         self.price = price
         self.category = category
-        self.subcategory = subcategory
-        self.img_url = img_url
-        self.type = itemtype
+        self.subcategory = subCategory
+        self.imgUrl = imgUrl
+        self.typeType = itemType
         self.id = len(self.all) + 1
 
         Item.all.append(self)
