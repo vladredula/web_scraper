@@ -3,9 +3,13 @@ import requests
 import re
 from item import Item
 from category import Category
-import pprint
 
 def getContent(url):
+    """
+    Sends a get request to the url and parses the response
+    @param url (str): URL of the web page to be parsed
+    @returns: bs4 object
+    """
     response = requests.get(url)
     content = response.content
     content = BeautifulSoup(content, "html.parser")
@@ -14,23 +18,35 @@ def getContent(url):
 
 
 def getStrippedString(string):
+    """
+    Strips off html tags using bs4's stripped_strings function
+    @param: str
+    @returns: list of parsed string
+    """
     string = string.stripped_strings
     
     return list(string)
 
 
-def getPrices(string):
-    string = string.replace("（", "(")
-    string = string.replace("）", ")")
-    string = string.replace(",", "")
-    string = string.replace("グラス", "glass")
-    string = string.replace("ハーフボトル", "halfbottle")
-    string = string.replace("ボトル", "bottle")
-    string = string.replace("ハーフサイズ", "half")
-    string = string.replace("レギュラーサイズ", "regular")
-    string = string.replace("フルサイズ", "full")
-    # strings = string.split("円)")
+def getPrices(priceString): 
+    """
+    Locates and identifies the sizes and prices based on the patterns obseved.
+    @param: priceString (str)
+    @returns: String containing only the sizes and corresponding prices
+        ex: 'size1:price1,size2:price2'
+    """
+    # replacing japanese characters with english equivalent words
+    priceString = priceString.replace("（", "(")
+    priceString = priceString.replace("）", ")")
+    priceString = priceString.replace(",", "")
+    priceString = priceString.replace("グラス", "glass")
+    priceString = priceString.replace("ハーフボトル", "halfbottle")
+    priceString = priceString.replace("ボトル", "bottle")
+    priceString = priceString.replace("ハーフサイズ", "half")
+    priceString = priceString.replace("レギュラーサイズ", "regular")
+    priceString = priceString.replace("フルサイズ", "full")
 
+    # available patterns
     patterns = [r"\((\w)\)(\d+)円\(税込(\d+)", 
                 r"(\d\w)\ (\d+)円\(税込(\d+)", 
                 r"(\w+)\:(\d+)円\(税込(\d+)", 
@@ -41,9 +57,8 @@ def getPrices(string):
     ]
 
     prices = []
-    # for string in strings:
     for pattern in patterns:
-        matches = re.findall(pattern, string)
+        matches = re.findall(pattern, priceString)
         if matches != None and matches != []:
             for match in matches:
                 if len(match) == 2:
@@ -56,18 +71,28 @@ def getPrices(string):
 
 
 def makeAbbreviation(string):
+    """
+    Makes abrreviation of a string
+    @params: string (str)
+    @returns: String abbreviation
+    """
     if string == '':
         return string
         
+    # remove white space
     string = string.strip()
+
+    # use the first character of the string as the first character of the abbr
     abbreviation = string[0]
 
     vowels = 'aeiouAEIOU'
     newString = ''
+    # removing vowels and non-alphanumeric characters
     for s in string[1:]:
         if s not in vowels and s.isalnum():
             newString += s
 
+    # retaining only the first 3 characters and adding it to abbr
     for i in range(3):
         if i < len(newString):
             abbreviation += newString[i]
@@ -76,6 +101,12 @@ def makeAbbreviation(string):
     
 
 def scrape():
+    """
+    This function is intended only to scrape certain urls.
+    Every web page has different HTML structure therefore, this function is only
+    intended to scrape "https://www.tgifridays.co.jp/foods/" and "https://www.tgifridays.co.jp/drink/".
+    Other web pages will need a different function in order to srape properly
+    """
     soup = getContent("https://www.tgifridays.co.jp/foods/")
 
     # locating the food category menu
@@ -97,16 +128,17 @@ def scrape():
         categoryName = categoryName.lower()
         categoryAbbr = makeAbbreviation(categoryName)
         
+        # saving category
         Category(categoryName, categoryAbbr, 'food', catImgUrl)
 
         li = soup.find("div", {"id":categoryId})
         liList = li.findAll("li", class_="menu-item")
     
         # getting the list of food under each category
-        subCategory = ""
+        subCategory = categoryName
         for li in liList:
             if len(li['class']) > 1:
-                subCategory = li.text.lower()
+                subCategory = li.text.lower().strip()
                 continue
     
             imgUrl = li.img['src']
@@ -123,8 +155,9 @@ def scrape():
             if len(details) == 1:
                 details = details[0].rsplit('。', 1)
     
-            price = getPrices(details[1])
+            price = getPrices(details[1]).lower()
     
+            # saving item
             Item(name, tname, categoryAbbr, subCategory, 'food', price, imgUrl)
     
 
@@ -143,10 +176,10 @@ def scrape():
     
         pList = li.div.find_all("p")
     
-        subCategory = ""
+        subCategory = categoryName
         for p in pList:
             if p.has_attr('class'):
-                subCategory = p.text.lower()
+                subCategory = p.text.lower().strip()
                 continue
             
             drink = getStrippedString(p)
@@ -154,9 +187,9 @@ def scrape():
             tname = drink[-1]
             drink = ' '.join(drink[:-1])
     
-            price = getPrices(drink)
+            price = getPrices(drink).lower()
             drink = drink.split("/")
-            name = drink[0]
+            name = drink[0].strip()
 
             # specific string replacement
             # string pattern cannot be recognized
@@ -164,11 +197,5 @@ def scrape():
     
             Item(name, tname, categoryAbbr, subCategory, 'drink', price)
 
-    for item in Category.all:
-        print(item.__dict__)
-
-    for item in Item.all:
-        print(item.__dict__)
-    exit()
+    return {'items':Item.all,'categories':Category.all}
     
-scrape()
