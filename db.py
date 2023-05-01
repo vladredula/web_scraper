@@ -23,12 +23,12 @@ class DynamoDB:
                 AttributeDefinitions = [
                     {
                         'AttributeName': primary_key,
-                        'AttributeType': 'S'
+                        'AttributeType': 'N'
                     }
                 ],
                 ProvisionedThroughput = {
-                    'ReadCapacityUnits': 5,
-                    'WriteCapacityUnits': 5
+                    'ReadCapacityUnits': 10,
+                    'WriteCapacityUnits': 10
                 }
             )
             self.table.wait_until_exists()
@@ -45,12 +45,19 @@ class DynamoDB:
     def put_item(self, item):
         try:
             self.table.put_item(Item = item)
+            
+            return True
+        except RecursionError:
+            logger.error(
+                "Counld't add item to table %s. Check item: %s.", 
+                self.table.name, item)
         except ClientError as e:
             logger.error(
                 "Couldn't add item to table %s. Here's why: %s: %s",
                 self.table.name,
                 e.response['Error']['Code'], e.response['Error']['Message'])
-            raise
+        
+        return False
         
     # Check if table exists in DynamoDB
     def table_exists(self, table_name):
