@@ -17,18 +17,37 @@ Navigate to `webscraper` folder. Select the following files/folders and make a z
 > for `windows` select the items and right click and then choose `Send to` > `Compressed (zipped)`
 
 #### AWS Lambda
-Make an IAM role for AWS Lambda and attach the policies `CloudWatchFullAccess` and `AmazonDynamoDBFullAccess`. You can name your role `LambdaRoleForDynamoDB`.
-
-Once the IAM role is created, make a lambda function. Here are the steps:
+Here are the steps to make a lambda function:
 - Go to [AWS Lambda](https://ap-northeast-1.console.aws.amazon.com/lambda/)
 - Click the `Create Function` located on the upper right
 - Select `Author from Scratch`
 - You can type `webScraper` in the function name or anything you want
 - Runtime: `Python 3.9`
-- Click on `Change default execution role`
--- Select `Use existing role`
--- And choose `LambdaRoleForDynamoDB`
 - Click `Create function`
+
+Attatch the policy below to your lambda excecution role:
+```
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "VisualEditor0",
+            "Effect": "Allow",
+            "Action": [
+                "dynamodb:PutItem",
+                "dynamodb:DeleteItem",
+                "dynamodb:GetItem",
+                "dynamodb:Scan",
+                "dynamodb:CreateTable",
+                "dynamodb:BatchWriteItem",
+                "dynamodb:DescribeTable",
+                "dynamodb:ListTables"
+            ],
+            "Resource": "*"
+        }
+    ]
+}
+```
 
 You can now upload the zip file that you create earlier.
 - On your Lambda function, click on `Upload from` button located on the right side
